@@ -6,15 +6,15 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const MONTHLY_LIMIT = 1500;
 const DATA_FILE = '/tmp/meugasto-data.json';
+const DEFAULT_LIMIT = 1500;
 
 // ── Storage ────────────────────────────────────────────
 function loadData() {
   try {
     return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
   } catch {
-    return { hash: null, salt: null, expenses: [], nextId: 1 };
+    return { hash: null, salt: null, monthlyLimit: DEFAULT_LIMIT, expenses: [], nextId: 1 };
   }
 }
 
@@ -31,8 +31,14 @@ function saveData(data) {
     const hash = crypto.pbkdf2Sync('admin123', salt, 1000, 64, 'sha512').toString('hex');
     data.hash = hash;
     data.salt = salt;
+    data.monthlyLimit = data.monthlyLimit || DEFAULT_LIMIT;
     saveData(data);
     console.log('Default user created: admin / admin123');
+  }
+  // Ensure monthlyLimit exists on existing data
+  if (!data.monthlyLimit) {
+    data.monthlyLimit = DEFAULT_LIMIT;
+    saveData(data);
   }
 })();
 
@@ -83,6 +89,18 @@ app.get('/logout', (req, res) => {
   res.redirect('/login');
 });
 
+// Update monthly limit
+app.post('/limit', requireAuth, (req, res) => {
+  const { limit } = req.body;
+  const val = parseFloat(limit);
+  if (val > 0 && val < 100000) {
+    const data = loadData();
+    data.monthlyLimit = val;
+    saveData(data);
+  }
+  res.redirect('/');
+});
+
 // Main page
 app.get('/', requireAuth, (req, res) => {
   const now = new Date();
@@ -93,19 +111,19 @@ app.get('/', requireAuth, (req, res) => {
   const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
   const data = loadData();
+  const limit = data.monthlyLimit || DEFAULT_LIMIT;
   const expenses = data.expenses
     .filter(e => e.date.startsWith(monthStr))
     .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
-  const remaining = MONTHLY_LIMIT - totalSpent;
-  const pct = Math.min(totalSpent / MONTHLY_LIMIT * 100, 100);
+  const remaining = limit - totalSpent;
+  const pct = Math.min(totalSpent / limit * 100, 100);
 
   const categories = ['Alimentacao','Transporte','Lazer','Assinaturas','Compras','Outros'];
   const catTotals = {};
   categories.forEach(c => {
-    const t = expenses.filter(e => e.category === c).reduce((s, e) => s + e.amount, 0);
-    if (t > 0) catTotals[c] = t;
+    catTotals[c] = expenses.filter(e => e.category === c).reduce((s, e) => s + e.amount, 0);
   });
 
   res.render('index', {
@@ -119,7 +137,8 @@ app.get('/', requireAuth, (req, res) => {
     monthStr,
     categories,
     catTotals,
-    MONTHLY_LIMIT,
+    MONTHLY_LIMIT: limit,
+    limitEdit: limit,
     username: req.session.username
   });
 });
@@ -156,9 +175,10 @@ app.post('/delete/:id', requireAuth, (req, res) => {
 app.get('/api/month/:year/:month', requireAuth, (req, res) => {
   const monthStr = `${req.params.year}-${String(req.params.month).padStart(2, '0')}`;
   const data = loadData();
+  const limit = data.monthlyLimit || DEFAULT_LIMIT;
   const expenses = data.expenses.filter(e => e.date.startsWith(monthStr));
   const total = expenses.reduce((s, e) => s + e.amount, 0);
-  res.json({ expenses, total, remaining: MONTHLY_LIMIT - total });
+  res.json({ expenses, total, remaining: limit - total, limit });
 });
 
 // Export for Vercel

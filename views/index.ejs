@@ -19,6 +19,14 @@ h1{font-size:20px}
 .saldo .value.verde{color:#4ade80}
 .saldo .value.vermelho{color:#f87171}
 .saldo .sub{font-size:12px;opacity:0.5;margin-top:4px}
+.limit-row{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:#999;margin-top:6px}
+.limit-row .val{color:#ccc}
+.limit-row .edit-btn{background:none;border:none;color:#666;cursor:pointer;font-size:13px;padding:2px;line-height:1}
+.limit-row .edit-btn:hover{color:#4ade80}
+.limit-edit{display:none;align-items:center;justify-content:center;gap:6px;margin-top:6px}
+.limit-edit.show{display:flex}
+.limit-edit input{width:80px;padding:4px 8px;border-radius:6px;border:1px solid #444;background:#0f0f0f;color:#fff;font-size:13px;text-align:center}
+.limit-edit button{padding:4px 10px;border-radius:6px;border:none;background:#22c55e;color:#000;font-size:12px;font-weight:600;cursor:pointer}
 .bar{margin:12px 0 20px;height:8px;background:#222;border-radius:10px;overflow:hidden}
 .bar-fill{height:100%;border-radius:10px;transition:width 0.4s}
 .bar-fill.ok{background:#22c55e}
@@ -27,6 +35,17 @@ h1{font-size:20px}
 .nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:#888}
 .nav a{color:#888;text-decoration:none;font-size:20px;padding:4px 8px}
 .nav a:hover{color:#4ade80}
+/* Category Summary */
+.cats{margin-bottom:16px;background:#1a1a1a;border-radius:12px;padding:16px}
+.cats-title{font-size:13px;font-weight:600;color:#999;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
+.cat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+.cat-row + .cat-row{border-top:1px solid #222}
+.cat-name{display:flex;align-items:center;gap:8px;font-size:14px;color:#ccc}
+.cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.cat-val{font-size:14px;font-weight:600;color:#e0e0e0}
+.cat-val.zero{color:#555;font-weight:400}
+.cat-total-row{display:flex;justify-content:space-between;padding:10px 0 0;margin-top:6px;border-top:2px solid #333;font-size:14px;font-weight:700;color:#e0e0e0}
+/* Form */
 .form{background:#1a1a1a;padding:16px;border-radius:12px;margin-bottom:16px}
 .form-row{display:flex;gap:8px;margin-bottom:8px}
 .form-row input,.form-row select,.form-row button{padding:12px;border-radius:8px;border:1px solid #333;background:#0f0f0f;color:#e0e0e0;font-size:15px}
@@ -38,10 +57,11 @@ h1{font-size:20px}
 .quicks{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .quicks button{padding:6px 14px;border-radius:20px;border:1px solid #333;background:#0f0f0f;color:#888;font-size:13px;cursor:pointer}
 .quicks button:active{background:#22c55e22;border-color:#22c55e;color:#4ade80}
+/* Extrato */
+.extrato-title{font-size:13px;font-weight:600;color:#999;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
 .list{list-style:none}
 .item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1a1a1a}
 .item-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
-.cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .item-info{flex:1;min-width:0}
 .item-desc{font-size:14px}
 .item-date{font-size:11px;color:#555;margin-top:2px}
@@ -49,9 +69,6 @@ h1{font-size:20px}
 .item-del{background:none;border:none;color:#444;font-size:16px;cursor:pointer;padding:4px;flex-shrink:0}
 .item-del:hover{color:#ef4444}
 .empty{text-align:center;color:#555;padding:40px 0;font-size:14px}
-.cats{margin-bottom:16px}
-.cat-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#888}
-.cat-row span:first-child{display:flex;align-items:center;gap:6px}
 .summary{display:flex;gap:8px;margin-bottom:16px}
 .card{flex:1;padding:12px;border-radius:10px;background:#1a1a1a;text-align:center}
 .card .l{font-size:11px;color:#666}
@@ -71,7 +88,17 @@ h1{font-size:20px}
   <div class="value <%= remaining >= 0 ? 'verde' : 'vermelho' %>">
     R$ <%= Number(remaining).toFixed(2) %>
   </div>
-  <div class="sub">Teto: R$ <%= MONTHLY_LIMIT %> · Gasto: R$ <%= Number(totalSpent).toFixed(2) %></div>
+  <div class="limit-row">
+    <span>Teto:</span>
+    <span class="val" id="limitDisplay">R$ <%= MONTHLY_LIMIT %></span>
+    <button class="edit-btn" id="limitEditBtn" onclick="toggleLimitEdit()">✏️</button>
+    <span>· Gasto: R$ <%= Number(totalSpent).toFixed(2) %></span>
+  </div>
+  <form class="limit-edit" id="limitForm" method="POST" action="/limit">
+    <input type="number" name="limit" step="1" min="1" value="<%= MONTHLY_LIMIT %>">
+    <button type="submit">Salvar</button>
+    <button type="button" onclick="toggleLimitEdit()" style="background:#333;color:#ccc;padding:4px 10px;border-radius:6px;border:none;font-size:12px;cursor:pointer">Cancelar</button>
+  </form>
 </div>
 
 <div class="bar">
@@ -84,18 +111,25 @@ h1{font-size:20px}
   <a href="/?year=<%= month === 12 ? year + 1 : year %>&month=<%= month === 12 ? 1 : month + 1 %>">→</a>
 </div>
 
-<% if (Object.keys(catTotals).length > 0) { %>
+<!-- Resumo por Categoria -->
 <div class="cats">
+  <div class="cats-title">📊 Resumo por Categoria</div>
   <% ['Alimentacao','Transporte','Lazer','Assinaturas','Compras','Outros'].forEach(c => { %>
-    <% if (catTotals[c]) { %>
     <div class="cat-row">
-      <span><span class="cat-dot" style="background:<%= {Alimentacao:'#f59e0b',Transporte:'#3b82f6',Lazer:'#a855f7',Assinaturas:'#06b6d4',Compras:'#ec4899',Outros:'#6b7280'}[c] %>"></span><%= c %></span>
-      <span>R$ <%= Number(catTotals[c]).toFixed(2) %></span>
+      <div class="cat-name">
+        <span class="cat-dot" style="background:<%= {Alimentacao:'#f59e0b',Transporte:'#3b82f6',Lazer:'#a855f7',Assinaturas:'#06b6d4',Compras:'#ec4899',Outros:'#6b7280'}[c] %>"></span>
+        <%= c %>
+      </div>
+      <div class="cat-val <%= catTotals[c] === 0 ? 'zero' : '' %>">
+        R$ <%= Number(catTotals[c]).toFixed(2) %>
+      </div>
     </div>
-    <% } %>
   <% }) %>
+  <div class="cat-total-row">
+    <span>Total</span>
+    <span>R$ <%= Number(totalSpent).toFixed(2) %></span>
+  </div>
 </div>
-<% } %>
 
 <div class="form">
   <form method="POST" action="/add">
@@ -122,9 +156,11 @@ h1{font-size:20px}
   </form>
 </div>
 
+<!-- Extrato Completo -->
 <% if (expenses.length === 0) { %>
-<div class="empty">Nenhum gasto este mes 🎉</div>
+<div class="empty">Nenhum gasto este mês 🎉</div>
 <% } else { %>
+<div class="extrato-title">📋 Extrato Completo</div>
 <ul class="list">
 <% expenses.forEach(e => { %>
   <li class="item">
@@ -143,6 +179,14 @@ h1{font-size:20px}
 <% }) %>
 </ul>
 <% } %>
+
+<script>
+function toggleLimitEdit() {
+  document.querySelector('.limit-row').style.display =
+    document.querySelector('.limit-row').style.display === 'none' ? 'flex' : 'none';
+  document.getElementById('limitForm').classList.toggle('show');
+}
+</script>
 
 </body>
 </html>
