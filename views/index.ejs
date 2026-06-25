@@ -92,7 +92,10 @@ h1{font-size:clamp(18px,4vw,24px)}
 
 <div class="header">
   <h1>💰 Meu Gasto</h1>
-  <a href="/logout">sair</a>
+  <div style="display:flex;align-items:center;gap:8px">
+    <% if (notionActive) { %><span style="font-size:11px;color:#4ade80;background:#064e3b33;padding:4px 8px;border-radius:20px;border:1px solid #065f46">↻ Notion</span><% } %>
+    <a href="/logout">sair</a>
+  </div>
 </div>
 
 <div class="saldo <%= remaining >= 0 ? 'positivo' : 'negativo' %>">

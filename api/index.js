@@ -44,6 +44,17 @@ function notionRequest(method, path, body) {
   });
 }
 
+// ── Rebuild local expenses from Notion ────────────────
+async function rebuildFromNotion(year, month) {
+  if (!NOTION_ACTIVE) return null;
+  const monthLabel = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][month - 1] + ' ' + year;
+  const q = await notionRequest('POST', 'databases/' + NOTION_DB + '/query', {
+    filter: { property: 'Mes', title: { equals: monthLabel } }
+  });
+  if (!q || !q.results || q.results.length === 0) return null;
+  return q.results[0].properties;
+}
+
 // ── Sync current month to Notion ───────────────────────
 async function syncNotionMonth(year, month) {
   if (!NOTION_ACTIVE) return;
@@ -175,14 +186,50 @@ app.post('/limit', requireAuth, (req, res) => {
   res.redirect('/');
 });
 
-app.get('/', requireAuth, (req, res) => {
+app.get('/', requireAuth, async (req, res) => {
   const now = new Date();
   const year = parseInt(req.query.year) || now.getFullYear();
   const month = parseInt(req.query.month) || (now.getMonth() + 1);
   const monthStr = `${year}-${String(month).padStart(2, '0')}`;
   const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  const data = loadData();
+
+  let data = loadData();
   const limit = data.monthlyLimit || DEFAULT_LIMIT;
+
+  // Rebuild from Notion if local empty and Notion connected
+  if (NOTION_ACTIVE) {
+    const localExpenses = data.expenses.filter(e => e.date.startsWith(monthStr));
+    if (localExpenses.length === 0 && data.nextId <= 1) {
+      const notionProps = await rebuildFromNotion(year, month);
+      if (notionProps) {
+        const catMap = { Alimentacao: 0, Transporte: 0, Lazer: 0, Assinaturas: 0, Compras: 0, Outros: 0 };
+        let totalGasto = notionProps['Total Gasto']?.number || 0;
+        Object.keys(catMap).forEach(c => {
+          catMap[c] = notionProps[c]?.number || 0;
+        });
+        // Create synthetic expenses so the UI shows something
+        const synExpenses = [];
+        let synId = 1;
+        Object.keys(catMap).forEach(c => {
+          if (catMap[c] > 0) {
+            synExpenses.push({
+              id: synId++, amount: catMap[c], category: c,
+              description: c, date: monthStr + '-01',
+              created_at: new Date().toISOString()
+            });
+          }
+        });
+        // Update the data file with these syn expenses
+        if (synExpenses.length > 0) {
+          data.expenses = synExpenses;
+          data.nextId = synId;
+          data.notionRestored = true;
+          saveData(data);
+          data = loadData();
+        }
+      }
+    }
+  }
   const expenses = data.expenses.filter(e => e.date.startsWith(monthStr)).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const remaining = limit - totalSpent;
@@ -190,7 +237,7 @@ app.get('/', requireAuth, (req, res) => {
   const categories = ['Alimentacao','Transporte','Lazer','Assinaturas','Compras','Outros'];
   const catTotals = {};
   categories.forEach(c => { catTotals[c] = expenses.filter(e => e.category === c).reduce((s, e) => s + e.amount, 0); });
-  res.render('index', { expenses, totalSpent, remaining, pct, month, year, monthName: months[month - 1], monthStr, categories, catTotals, MONTHLY_LIMIT: limit, limitEdit: limit, username: req.session.username, notionActive: NOTION_ACTIVE });
+  res.render('index', { expenses, totalSpent, remaining, pct, month, year, monthName: months[month - 1], monthStr, categories, catTotals, MONTHLY_LIMIT: limit, limitEdit: limit, username: req.session.username, notionActive: NOTION_ACTIVE, notionRestored: data.notionRestored || false });
 });
 
 app.post('/add', requireAuth, async (req, res) => {
