@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu Gasto</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f0f;color:#e0e0e0;max-width:480px;margin:0 auto;padding:16px;min-height:100vh}
+h1{font-size:20px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #222}
+.header a{color:#888;font-size:13px;text-decoration:none}
+.header a:hover{color:#4ade80}
+.saldo{padding:20px;border-radius:12px;margin-bottom:16px;text-align:center}
+.saldo.positivo{background:linear-gradient(135deg,#064e3b,#065f46)}
+.saldo.negativo{background:linear-gradient(135deg,#7f1d1d,#991b1b)}
+.saldo .label{font-size:13px;opacity:0.7;margin-bottom:4px}
+.saldo .value{font-size:36px;font-weight:700}
+.saldo .value.verde{color:#4ade80}
+.saldo .value.vermelho{color:#f87171}
+.saldo .sub{font-size:12px;opacity:0.5;margin-top:4px}
+.bar{margin:12px 0 20px;height:8px;background:#222;border-radius:10px;overflow:hidden}
+.bar-fill{height:100%;border-radius:10px;transition:width 0.4s}
+.bar-fill.ok{background:#22c55e}
+.bar-fill.warn{background:#f59e0b}
+.bar-fill.danger{background:#ef4444}
+.nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:#888}
+.nav a{color:#888;text-decoration:none;font-size:20px;padding:4px 8px}
+.nav a:hover{color:#4ade80}
+.form{background:#1a1a1a;padding:16px;border-radius:12px;margin-bottom:16px}
+.form-row{display:flex;gap:8px;margin-bottom:8px}
+.form-row input,.form-row select,.form-row button{padding:12px;border-radius:8px;border:1px solid #333;background:#0f0f0f;color:#e0e0e0;font-size:15px}
+.form-row input:focus,.form-row select:focus{outline:none;border-color:#4ade80}
+.form-row input[type=number]{width:110px;flex-shrink:0}
+.form-row select{flex:1}
+.form-row button{background:#22c55e;color:#000;font-weight:700;border:none;cursor:pointer;padding:12px 20px;transition:.2s}
+.form-row button:active{transform:scale(.96);background:#16a34a}
+.quicks{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.quicks button{padding:6px 14px;border-radius:20px;border:1px solid #333;background:#0f0f0f;color:#888;font-size:13px;cursor:pointer}
+.quicks button:active{background:#22c55e22;border-color:#22c55e;color:#4ade80}
+.list{list-style:none}
+.item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1a1a1a}
+.item-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.item-info{flex:1;min-width:0}
+.item-desc{font-size:14px}
+.item-date{font-size:11px;color:#555;margin-top:2px}
+.item-val{font-size:15px;font-weight:600;color:#f87171;flex-shrink:0}
+.item-del{background:none;border:none;color:#444;font-size:16px;cursor:pointer;padding:4px;flex-shrink:0}
+.item-del:hover{color:#ef4444}
+.empty{text-align:center;color:#555;padding:40px 0;font-size:14px}
+.cats{margin-bottom:16px}
+.cat-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#888}
+.cat-row span:first-child{display:flex;align-items:center;gap:6px}
+.summary{display:flex;gap:8px;margin-bottom:16px}
+.card{flex:1;padding:12px;border-radius:10px;background:#1a1a1a;text-align:center}
+.card .l{font-size:11px;color:#666}
+.card .v{font-size:22px;font-weight:700;margin-top:4px}
+.logout{color:#888;font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>💰 Meu Gasto</h1>
+  <a href="/logout">sair</a>
+</div>
+
+<div class="saldo <%= remaining >= 0 ? 'positivo' : 'negativo' %>">
+  <div class="label">Saldo restante em <%= monthName %></div>
+  <div class="value <%= remaining >= 0 ? 'verde' : 'vermelho' %>">
+    R$ <%= Number(remaining).toFixed(2) %>
+  </div>
+  <div class="sub">Teto: R$ <%= MONTHLY_LIMIT %> · Gasto: R$ <%= Number(totalSpent).toFixed(2) %></div>
+</div>
+
+<div class="bar">
+  <div class="bar-fill <%= pct >= 100 ? 'danger' : pct >= 75 ? 'warn' : 'ok' %>" style="width:<%= pct %>%"></div>
+</div>
+
+<div class="nav">
+  <a href="/?year=<%= month === 1 ? year - 1 : year %>&month=<%= month === 1 ? 12 : month - 1 %>">←</a>
+  <span><%= monthName %> <%= year %></span>
+  <a href="/?year=<%= month === 12 ? year + 1 : year %>&month=<%= month === 12 ? 1 : month + 1 %>">→</a>
+</div>
+
+<% if (Object.keys(catTotals).length > 0) { %>
+<div class="cats">
+  <% ['Alimentacao','Transporte','Lazer','Assinaturas','Compras','Outros'].forEach(c => { %>
+    <% if (catTotals[c]) { %>
+    <div class="cat-row">
+      <span><span class="cat-dot" style="background:<%= {Alimentacao:'#f59e0b',Transporte:'#3b82f6',Lazer:'#a855f7',Assinaturas:'#06b6d4',Compras:'#ec4899',Outros:'#6b7280'}[c] %>"></span><%= c %></span>
+      <span>R$ <%= Number(catTotals[c]).toFixed(2) %></span>
+    </div>
+    <% } %>
+  <% }) %>
+</div>
+<% } %>
+
+<div class="form">
+  <form method="POST" action="/add">
+    <div class="form-row">
+      <input type="number" name="amount" placeholder="Valor" step="0.01" min="0.01" required autofocus>
+      <select name="category" required>
+        <option value="Alimentacao">Alimentacao</option>
+        <option value="Transporte">Transporte</option>
+        <option value="Lazer">Lazer</option>
+        <option value="Assinaturas">Assinaturas</option>
+        <option value="Compras">Compras</option>
+        <option value="Outros">Outros</option>
+      </select>
+    </div>
+    <input type="hidden" name="date" value="<%= monthStr %>-01">
+    <button type="submit" style="width:100%;padding:12px;border-radius:8px;border:none;background:#22c55e;color:#000;font-weight:700;font-size:15px;cursor:pointer">Adicionar Gasto</button>
+    <div class="quicks">
+      <button type="button" onclick="document.querySelector('[name=amount]').value='10'">R$10</button>
+      <button type="button" onclick="document.querySelector('[name=amount]').value='20'">R$20</button>
+      <button type="button" onclick="document.querySelector('[name=amount]').value='30'">R$30</button>
+      <button type="button" onclick="document.querySelector('[name=amount]').value='50'">R$50</button>
+      <button type="button" onclick="document.querySelector('[name=amount]').value='100'">R$100</button>
+    </div>
+  </form>
+</div>
+
+<% if (expenses.length === 0) { %>
+<div class="empty">Nenhum gasto este mes 🎉</div>
+<% } else { %>
+<ul class="list">
+<% expenses.forEach(e => { %>
+  <li class="item">
+    <div class="item-left">
+      <span class="cat-dot" style="background:<%= {Alimentacao:'#f59e0b',Transporte:'#3b82f6',Lazer:'#a855f7',Assinaturas:'#06b6d4',Compras:'#ec4899',Outros:'#6b7280'}[e.category] %>"></span>
+      <div class="item-info">
+        <div class="item-desc"><%= e.description || e.category %></div>
+        <div class="item-date"><%= e.category %> · <%= e.date.slice(8) %>/<%= e.date.slice(5,7) %></div>
+      </div>
+    </div>
+    <div class="item-val">-R$ <%= Number(e.amount).toFixed(2) %></div>
+    <form method="POST" action="/delete/<%= e.id %>" style="display:inline">
+      <button class="item-del" type="submit">✕</button>
+    </form>
+  </li>
+<% }) %>
+</ul>
+<% } %>
+
+</body>
+</html>
