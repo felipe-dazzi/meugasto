@@ -6,77 +6,89 @@
 <title>Meu Gasto</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f0f;color:#e0e0e0;max-width:480px;margin:0 auto;padding:16px;min-height:100vh}
-h1{font-size:20px}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #222}
-.header a{color:#888;font-size:13px;text-decoration:none}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f0f;color:#e0e0e0;min-height:100vh;padding:clamp(12px,3vw,24px)}
+.container{max-width:640px;margin:0 auto;width:100%}
+h1{font-size:clamp(18px,4vw,24px)}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:clamp(12px,2.5vw,20px);padding-bottom:clamp(10px,2vw,16px);border-bottom:1px solid #222}
+.header a{color:#888;font-size:clamp(12px,2.5vw,14px);text-decoration:none}
 .header a:hover{color:#4ade80}
-.saldo{padding:20px;border-radius:12px;margin-bottom:16px;text-align:center}
+.saldo{padding:clamp(16px,3vw,28px);border-radius:12px;margin-bottom:clamp(12px,2.5vw,20px);text-align:center}
 .saldo.positivo{background:linear-gradient(135deg,#064e3b,#065f46)}
 .saldo.negativo{background:linear-gradient(135deg,#7f1d1d,#991b1b)}
-.saldo .label{font-size:13px;opacity:0.7;margin-bottom:4px}
-.saldo .value{font-size:36px;font-weight:700}
+.saldo .label{font-size:clamp(12px,2.5vw,14px);opacity:.7;margin-bottom:clamp(4px,1vw,8px)}
+.saldo .value{font-size:clamp(32px,8vw,52px);font-weight:700}
 .saldo .value.verde{color:#4ade80}
 .saldo .value.vermelho{color:#f87171}
-.saldo .sub{font-size:12px;opacity:0.5;margin-top:4px}
-.limit-row{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:#999;margin-top:6px}
+.saldo .sub{font-size:clamp(11px,2.2vw,13px);opacity:.5;margin-top:clamp(4px,1vw,6px)}
+.limit-row{display:flex;align-items:center;justify-content:center;gap:clamp(4px,1vw,8px);flex-wrap:wrap;font-size:clamp(11px,2.3vw,13px);color:#999;margin-top:clamp(6px,1.2vw,10px)}
 .limit-row .val{color:#ccc}
-.limit-row .edit-btn{background:none;border:none;color:#666;cursor:pointer;font-size:13px;padding:2px;line-height:1}
+.limit-row .edit-btn{background:none;border:none;color:#666;cursor:pointer;font-size:clamp(13px,2.5vw,16px);padding:2px;line-height:1}
 .limit-row .edit-btn:hover{color:#4ade80}
-.limit-edit{display:none;align-items:center;justify-content:center;gap:6px;margin-top:6px}
+.limit-edit{display:none;align-items:center;justify-content:center;gap:6px;margin-top:8px;flex-wrap:wrap}
 .limit-edit.show{display:flex}
-.limit-edit input{width:80px;padding:4px 8px;border-radius:6px;border:1px solid #444;background:#0f0f0f;color:#fff;font-size:13px;text-align:center}
-.limit-edit button{padding:4px 10px;border-radius:6px;border:none;background:#22c55e;color:#000;font-size:12px;font-weight:600;cursor:pointer}
-.bar{margin:12px 0 20px;height:8px;background:#222;border-radius:10px;overflow:hidden}
-.bar-fill{height:100%;border-radius:10px;transition:width 0.4s}
+.limit-edit input{width:clamp(70px,20vw,100px);padding:clamp(6px,1.2vw,10px) clamp(8px,1.5vw,12px);border-radius:6px;border:1px solid #444;background:#0f0f0f;color:#fff;font-size:clamp(13px,2.5vw,15px);text-align:center}
+.limit-edit button{padding:clamp(6px,1.2vw,10px) clamp(10px,2vw,14px);border-radius:6px;border:none;background:#22c55e;color:#000;font-size:clamp(12px,2.3vw,14px);font-weight:600;cursor:pointer}
+.limit-edit button:active{transform:scale(.96)}
+.bar{margin:clamp(10px,2vw,16px) 0;height:clamp(6px,1.5vw,10px);background:#222;border-radius:10px;overflow:hidden}
+.bar-fill{height:100%;border-radius:10px;transition:width .4s ease}
 .bar-fill.ok{background:#22c55e}
 .bar-fill.warn{background:#f59e0b}
 .bar-fill.danger{background:#ef4444}
-.nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:#888}
-.nav a{color:#888;text-decoration:none;font-size:20px;padding:4px 8px}
+.nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:clamp(12px,2.5vw,20px);color:#888}
+.nav a{color:#888;text-decoration:none;font-size:clamp(18px,4vw,24px);padding:clamp(4px,1vw,8px);-webkit-tap-highlight-color:transparent}
 .nav a:hover{color:#4ade80}
 /* Category Summary */
-.cats{margin-bottom:16px;background:#1a1a1a;border-radius:12px;padding:16px}
-.cats-title{font-size:13px;font-weight:600;color:#999;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
-.cat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
-.cat-row + .cat-row{border-top:1px solid #222}
-.cat-name{display:flex;align-items:center;gap:8px;font-size:14px;color:#ccc}
-.cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.cat-val{font-size:14px;font-weight:600;color:#e0e0e0}
+.cats{margin-bottom:clamp(12px,2.5vw,20px);background:#1a1a1a;border-radius:12px;padding:clamp(12px,2.5vw,20px)}
+.cats-title{font-size:clamp(12px,2.4vw,14px);font-weight:600;color:#999;margin-bottom:clamp(10px,2vw,14px);text-transform:uppercase;letter-spacing:.5px}
+.cat-row{display:flex;justify-content:space-between;align-items:center;padding:clamp(6px,1.2vw,10px) 0}
+.cat-row+.cat-row{border-top:1px solid #222}
+.cat-name{display:flex;align-items:center;gap:clamp(6px,1.2vw,10px);font-size:clamp(13px,2.6vw,15px);color:#ccc}
+.cat-dot{width:clamp(8px,1.5vw,12px);height:clamp(8px,1.5vw,12px);border-radius:50%;flex-shrink:0}
+.cat-val{font-size:clamp(13px,2.6vw,15px);font-weight:600;color:#e0e0e0;white-space:nowrap}
 .cat-val.zero{color:#555;font-weight:400}
-.cat-total-row{display:flex;justify-content:space-between;padding:10px 0 0;margin-top:6px;border-top:2px solid #333;font-size:14px;font-weight:700;color:#e0e0e0}
+.cat-total-row{display:flex;justify-content:space-between;padding:clamp(10px,2vw,14px) 0 0;margin-top:clamp(6px,1.2vw,10px);border-top:2px solid #333;font-size:clamp(14px,2.8vw,16px);font-weight:700;color:#e0e0e0}
+/* desktop: categories grid */
+@media(min-width:600px){.cats-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px}.cat-total-row{grid-column:1/-1}}
 /* Form */
-.form{background:#1a1a1a;padding:16px;border-radius:12px;margin-bottom:16px}
-.form-row{display:flex;gap:8px;margin-bottom:8px}
-.form-row input,.form-row select,.form-row button{padding:12px;border-radius:8px;border:1px solid #333;background:#0f0f0f;color:#e0e0e0;font-size:15px}
+.form{background:#1a1a1a;padding:clamp(12px,2.5vw,20px);border-radius:12px;margin-bottom:clamp(12px,2.5vw,20px)}
+.form-row{display:flex;gap:clamp(6px,1.2vw,10px);margin-bottom:clamp(8px,1.5vw,12px)}
+.form-row input,.form-row select,.form-row button{padding:clamp(10px,2.2vw,14px);border-radius:8px;border:1px solid #333;background:#0f0f0f;color:#e0e0e0;font-size:clamp(15px,3vw,17px);-webkit-appearance:none;appearance:none}
 .form-row input:focus,.form-row select:focus{outline:none;border-color:#4ade80}
-.form-row input[type=number]{width:110px;flex-shrink:0}
-.form-row select{flex:1}
-.form-row button{background:#22c55e;color:#000;font-weight:700;border:none;cursor:pointer;padding:12px 20px;transition:.2s}
+.form-row input[type=number]{width:clamp(90px,25vw,130px);flex-shrink:0}
+.form-row select{flex:1;background:#0f0f0f url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6' fill='%23888'/%3E%3C/svg%3E") no-repeat right 12px center;padding-right:32px}
+.form-row button{background:#22c55e;color:#000;font-weight:700;border:none;cursor:pointer;padding:clamp(10px,2.2vw,14px) clamp(16px,3vw,24px);transition:.15s;-webkit-tap-highlight-color:transparent}
 .form-row button:active{transform:scale(.96);background:#16a34a}
-.quicks{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.quicks button{padding:6px 14px;border-radius:20px;border:1px solid #333;background:#0f0f0f;color:#888;font-size:13px;cursor:pointer}
+@media(max-width:380px){.form-row{flex-direction:column}.form-row input[type=number]{width:100%}}
+.quicks{display:flex;gap:clamp(6px,1.2vw,8px);flex-wrap:wrap;margin-top:clamp(8px,1.5vw,12px)}
+.quicks button{padding:clamp(8px,1.5vw,10px) clamp(14px,2.5vw,18px);border-radius:20px;border:1px solid #333;background:#0f0f0f;color:#888;font-size:clamp(13px,2.5vw,14px);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .quicks button:active{background:#22c55e22;border-color:#22c55e;color:#4ade80}
 /* Extrato */
-.extrato-title{font-size:13px;font-weight:600;color:#999;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.extrato-title{font-size:clamp(12px,2.4vw,14px);font-weight:600;color:#999;margin-bottom:clamp(8px,1.5vw,12px);text-transform:uppercase;letter-spacing:.5px}
 .list{list-style:none}
-.item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1a1a1a}
-.item-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.item{display:flex;justify-content:space-between;align-items:center;padding:clamp(10px,2vw,14px) 0;border-bottom:1px solid #1a1a1a;gap:8px}
+.item-left{display:flex;align-items:center;gap:clamp(8px,1.5vw,12px);flex:1;min-width:0}
 .item-info{flex:1;min-width:0}
-.item-desc{font-size:14px}
-.item-date{font-size:11px;color:#555;margin-top:2px}
-.item-val{font-size:15px;font-weight:600;color:#f87171;flex-shrink:0}
-.item-del{background:none;border:none;color:#444;font-size:16px;cursor:pointer;padding:4px;flex-shrink:0}
-.item-del:hover{color:#ef4444}
-.empty{text-align:center;color:#555;padding:40px 0;font-size:14px}
-.summary{display:flex;gap:8px;margin-bottom:16px}
-.card{flex:1;padding:12px;border-radius:10px;background:#1a1a1a;text-align:center}
-.card .l{font-size:11px;color:#666}
-.card .v{font-size:22px;font-weight:700;margin-top:4px}
-.logout{color:#888;font-size:13px}
+.item-desc{font-size:clamp(13px,2.6vw,15px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item-date{font-size:clamp(11px,2.2vw,12px);color:#555;margin-top:2px}
+.item-val{font-size:clamp(14px,2.8vw,16px);font-weight:600;color:#f87171;flex-shrink:0;white-space:nowrap}
+.item-del{background:none;border:none;color:#444;font-size:clamp(16px,3vw,20px);cursor:pointer;padding:clamp(4px,1vw,8px);flex-shrink:0;-webkit-tap-highlight-color:transparent;line-height:1}
+.item-del:hover,.item-del:active{color:#ef4444}
+.empty{text-align:center;color:#555;padding:clamp(30px,6vw,50px) 0;font-size:clamp(13px,2.5vw,15px)}
+.summary{display:flex;gap:clamp(6px,1.2vw,10px);margin-bottom:clamp(12px,2.5vw,20px)}
+.card{flex:1;padding:clamp(10px,2vw,16px);border-radius:10px;background:#1a1a1a;text-align:center}
+.card .l{font-size:clamp(10px,2vw,12px);color:#666}
+.card .v{font-size:clamp(18px,4vw,26px);font-weight:700;margin-top:clamp(4px,1vw,6px)}
+.logout{color:#888;font-size:clamp(12px,2.3vw,14px)}
+@media(min-width:768px){
+  .container{max-width:720px}
+  .form-add{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .form-add .quicks{grid-column:1/-1}
+  .form-add button[type=submit]{grid-column:1/-1;margin-top:4px}
+}
 </style>
 </head>
 <body>
+<div class="container">
 
 <div class="header">
   <h1>💰 Meu Gasto</h1>
@@ -114,6 +126,7 @@ h1{font-size:20px}
 <!-- Resumo por Categoria -->
 <div class="cats">
   <div class="cats-title">📊 Resumo por Categoria</div>
+  <div class="cats-grid">
   <% ['Alimentacao','Transporte','Lazer','Assinaturas','Compras','Outros'].forEach(c => { %>
     <div class="cat-row">
       <div class="cat-name">
@@ -125,6 +138,7 @@ h1{font-size:20px}
       </div>
     </div>
   <% }) %>
+  </div>
   <div class="cat-total-row">
     <span>Total</span>
     <span>R$ <%= Number(totalSpent).toFixed(2) %></span>
@@ -188,5 +202,6 @@ function toggleLimitEdit() {
 }
 </script>
 
+</div>
 </body>
 </html>
